@@ -1,6 +1,8 @@
 #include "SX126x.h"
 #include <string.h>
 #include <math.h>
+#include "esp_attr.h"
+
 #if !RADIOLIB_EXCLUDE_SX126X
 
 // !MODIFIED
