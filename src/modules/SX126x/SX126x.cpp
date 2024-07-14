@@ -3,6 +3,15 @@
 #include <math.h>
 #if !RADIOLIB_EXCLUDE_SX126X
 
+// !MODIFIED
+static volatile bool txDoneFlag = false;
+
+// ISR to handle the interrupt
+void IRAM_ATTR handleTXInterrupt() {
+    txDoneFlag = true;
+}
+// !------------------------------------------
+
 SX126x::SX126x(Module* mod) : PhysicalLayer(RADIOLIB_SX126X_FREQUENCY_STEP_SIZE, RADIOLIB_SX126X_MAX_PACKET_LENGTH) {
   this->mod = mod;
   this->XTAL = false;
@@ -248,13 +257,19 @@ int16_t SX126x::transmit(const uint8_t* data, size_t len, uint8_t addr) {
 
   // wait for packet transmission or timeout
   RadioLibTime_t start = this->mod->hal->millis();
-  while(!this->mod->hal->digitalRead(this->mod->getIrq())) {
+  // !MODIFIED
+  while(!txDoneFlag) {
+  //!------------------------------------------
     this->mod->hal->yield();
     if(this->mod->hal->millis() - start > timeout) {
       finishTransmit();
       return(RADIOLIB_ERR_TX_TIMEOUT);
     }
   }
+
+  // !MODIFIED
+  txDoneFlag = false;
+  // !------------------------------------------
 
   // update data rate
   RadioLibTime_t elapsed = this->mod->hal->millis() - start;
